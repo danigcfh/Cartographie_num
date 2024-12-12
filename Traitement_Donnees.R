@@ -13,6 +13,7 @@ library(utf8)
 posts_1 <- read_csv("posts (1).csv")
 
 
+
 #Identify and eliminate posts previously published and later reshared by the same page to avoid duplicates
 # Extract relevant parts of URLs for comparison
 
@@ -55,48 +56,44 @@ post_f_1 <- filter(posts_1, post_url_1!=link_1)
 # Add country of origin for each page based on metadata
 post_f_1$country <- post_f_1$account_page_admin_top_country
 
-# Add logical indicators for available metadata
-post_f_1$Co[!is.na(post_f_1$country)] <- 1
-post_f_1$Co[is.na(post_f_1$country)] <- 0
+# Add a logical indicator (1 = metadata available, 0 = missing) for country metadata
+post_f_1$Co <- ifelse(!is.na(post_f_1$country), 1, 0)
 
 
-# Manually add data when metadata is not available 
+# Manually assign countries for specific account URLs where metadata is missing
 
-post_f_1$country[post_f_1$account_url=="https://www.facebook.com/groups/1606815329554276"] <- "MX"
-post_f_1$country[post_f_1$account_url=="https://www.facebook.com/groups/303970143732912"] <- "ES"
-post_f_1$country[post_f_1$account_url=="https://www.facebook.com/groups/1614875702032929"] <- "AR"
-post_f_1$country[post_f_1$account_url=="https://www.facebook.com/groups/975946939153291"] <- "PE"
+post_f_1$country[post_f_1$account_url=="https://www.facebook.com/groups/1606815329554276"] <- "MEX"
+post_f_1$country[post_f_1$account_url=="https://www.facebook.com/groups/303970143732912"] <- "EU"
+post_f_1$country[post_f_1$account_url=="https://www.facebook.com/groups/1614875702032929"] <- "ARG"
+post_f_1$country[post_f_1$account_url=="https://www.facebook.com/groups/975946939153291"] <- "PER"
 post_f_1$country[post_f_1$account_url=="https://www.facebook.com/groups/850969585455100"] <- "CUB"
-post_f_1$country[post_f_1$account_url=="https://www.facebook.com/groups/275911789207670"] <- "PE"
-post_f_1$country[post_f_1$account_url=="https://www.facebook.com/groups/198383487313673"] <- "AR"
+post_f_1$country[post_f_1$account_url=="https://www.facebook.com/groups/275911789207670"] <- "PER"
+post_f_1$country[post_f_1$account_url=="https://www.facebook.com/groups/198383487313673"] <- "ARG"
 post_f_1$country[post_f_1$account_url=="https://www.facebook.com/groups/893101194380807"] <- "BOL"
-post_f_1$country[post_f_1$account_url=="https://www.facebook.com/groups/149107612387145"] <- "AR"
-post_f_1$country[post_f_1$account_url=="https://www.facebook.com/groups/1411250252226356"] <- "MX"
-post_f_1$country[post_f_1$account_url=="https://www.facebook.com/groups/259753348068603"] <- "MX"
-post_f_1$country[post_f_1$account_url=="https://www.facebook.com/402351143227209"] <- "PE"
-post_f_1$country[post_f_1$account_url=="https://www.facebook.com/1055204584572916"] <- "MX"
+post_f_1$country[post_f_1$account_url=="https://www.facebook.com/groups/149107612387145"] <- "ARG"
+post_f_1$country[post_f_1$account_url=="https://www.facebook.com/groups/1411250252226356"] <- "MEX"
+post_f_1$country[post_f_1$account_url=="https://www.facebook.com/groups/259753348068603"] <- "MEX"
+post_f_1$country[post_f_1$account_url=="https://www.facebook.com/402351143227209"] <- "PER"
+post_f_1$country[post_f_1$account_url=="https://www.facebook.com/1055204584572916"] <- "MEX"
 
-#ensure consistency accross country names
-post_f_1$country[post_f_1$country=="MX"] <- "MEX"
-post_f_1$country[post_f_1$country=="CUB"] <- "CUB"
-post_f_1$country[post_f_1$country=="PE"] <- "PER"
-post_f_1$country[post_f_1$country=="ES"] <- "EU"
-post_f_1$country[post_f_1$country=="SV"] <- "SLV"
-post_f_1$country[post_f_1$country=="AR"] <- "ARG"
-post_f_1$country[post_f_1$country=="EC"]<- "ECU"
-post_f_1$country[post_f_1$country=="BO"] <- "BOL"
-post_f_1$country[post_f_1$country=="CO"] <- "COL"
-post_f_1$country[post_f_1$country=="CR"] <- "CRI"
-post_f_1$country[post_f_1$country=="BOL"] <- "BOL"
-post_f_1$country[post_f_1$country=="CL"]<- "CHL"
-post_f_1$country[post_f_1$country=="US"] <- "N.A"
+# Standardize country codes to ensure consistency
+country_code_mapping <- list(
+  "MX" = "MEX", "CUB" = "CUB", "PE" = "PER", "ES" = "EU",
+  "SV" = "SLV", "AR" = "ARG", "EC" = "ECU", "BO" = "BOL",
+  "CO" = "COL", "CR" = "CRI", "CL" = "CHL", "US" = "N.A", "BOL" ="BOL"
+)
 
-#create logical variable for tracking purposes
-post_f_1$Co[!is.na(post_f_1$country)] <- 1
-post_f_1$Co[is.na(post_f_1$country)] <- 0
+post_f_1$country <- ifelse(
+  post_f_1$country %in% names(country_code_mapping),
+  unlist(country_code_mapping[post_f_1$country]),
+  NA
+)
+
+# Re-calculate the logical variable for tracking metadata availability
+post_f_1$Co <- ifelse(!is.na(post_f_1$country), 1, 0)
 
 
-# Create logical variables  for message, description and TLD
+# Add indicators for metadata completeness: message, description, and top-level domain (TLD)
 post_f_1 <- post_f_1 %>%
   mutate(
     M = ifelse(!is.na(message), 1, 0),
@@ -128,116 +125,33 @@ post_f_1$description_clean <- clean_text(post_f_1$description)
 
 
 #Identify country related to hyperlinks by TLD
+post_f_1$TLD <- paste0(".", post_f_1$TLD)
 
-post_f_1$TLD_1 <- paste0(".", post_f_1$TLD)
+# Define the TLD to Country/Region mapping
+tld_map <- data.frame(
+  TLD = c(".mx", ".pe", ".ec", ".py", ".gt", ".ar", ".pr", ".co", ".cl", ".cu", ".uy", 
+          ".bo", ".cr", ".hn", ".do", ".sv", ".ni", ".br", ".ve", ".pa", # Latin America
+          ".eu", ".fr", ".it", ".uk", ".be", ".ru", ".es", ".de", ".me", ".au", ".al", 
+          ".va", ".at", ".no", ".ch", ".ie", ".se", ".rs", ".pl",         # Europe
+          ".us", ".vi", ".ca",                                           # North America
+          ".ph", ".in", ".gd", ".nz", ".st", ".ag", ".io", ".ws", ".cn", 
+          ".kr", ".fo", ".am", ".fm", ".ng", ".mp", ".gl", ".la"),       # Mundo (Rest of the World)
+  TLD_1 = c("MEX", "PER", "ECU", "PRY", "GTM", "ARG", "PRI", "COL", "CHL", "CUB", 
+              "URY", "BOL", "CRI", "HND", "DOM", "SLV", "NIC", "BRA", "VEN", "PAN", 
+              "EU", "EU", "EU", "EU", "EU", "EU", "EU", "EU", "EU", "EU", "EU", 
+              "EU", "EU", "EU", "EU", "EU", "EU", "EU", "EU",
+              "N.A", "N.A", "N.A", 
+              "MUNDO", "MUNDO", "MUNDO", "MUNDO", "MUNDO", "MUNDO", "MUNDO", "MUNDO", "MUNDO",
+              "MUNDO", "MUNDO", "MUNDO", "MUNDO", "MUNDO", "MUNDO", "MUNDO", "MUNDO")
+)
 
-#Exclude TLD not associated to countries 
-post_f_1$TLD_1[post_f_1$TLD_1 == ".NA"|is.na(post_f_1$TLD_1)|
-                   post_f_1$TLD_1 == ".org"|
-                   post_f_1$TLD_1 == ".ly"|
-                   post_f_1$TLD_1 == ".red"|
-                   post_f_1$TLD_1 == ".tv"|
-                   post_f_1$TLD_1 == ".digital"|
-                   post_f_1$TLD_1 == ".net"|
-                   post_f_1$TLD_1 == ".info"|
-                   post_f_1$TLD_1 == ".coop"|
-                   post_f_1$TLD_1 == ".casa"|
-                   post_f_1$TLD_1 == ".blog"|
-                   post_f_1$TLD_1 == ".live"|
-                   post_f_1$TLD_1 == ".website"|
-                   post_f_1$TLD_1 == ".life"|
-                   post_f_1$TLD_1 == ".press"|
-                   post_f_1$TLD_1 == ".cool"|
-                   post_f_1$TLD_1 == ".guru"|
-                   post_f_1$TLD_1 == ".my"|
-                   post_f_1$TLD_1 == ".club"|
-                   post_f_1$TLD_1 == ".tt"|
-                   post_f_1$TLD_1 == ".site"|
-                   post_f_1$TLD_1 == ".news"|
-                   post_f_1$TLD_1 == ".media"|
-                   post_f_1$TLD_1 == ".top"|
-                   post_f_1$TLD_1 == ".tube"|
-                   post_f_1$TLD_1 == ".xyz"|
-                   post_f_1$TLD_1 == ".link"|
-                   post_f_1$TLD_1 == ".cat"|
-                   post_f_1$TLD_1 == ".today"|
-                   post_f_1$TLD_1 == ".gov"|
-                   post_f_1$TLD_1 == ".app"|
-                   post_f_1$TLD_1 == ".int"|
-                   post_f_1$TLD_1 == ".moe"|
-                   post_f_1$TLD_1 == ".lat"|
-                   post_f_1$TLD_1 == ".gle"|
-                   post_f_1$TLD_1 == ".fm"|
-                   post_f_1$TLD_1 == ".online"] <- 0
+# Merge to map TLDs to Countries/Regions
+post_f_1 <- merge(post_f_1, tld_map, by.x = "TLD", by.y = "TLD", all.x = TRUE)
 
-#Associate TLD for all latin american countries
-post_f_1$TLD_1[post_f_1$TLD_1 == ".mx"] <- "MEX"
-post_f_1$TLD_1[post_f_1$TLD_1 == ".pe"] <- "PER"
-post_f_1$TLD_1[post_f_1$TLD_1 == ".ec"] <- "ECU"
-post_f_1$TLD_1[post_f_1$TLD_1 == ".py"] <- "PRY"
-post_f_1$TLD_1[post_f_1$TLD_1 == ".gt"] <- "GTM"
-post_f_1$TLD_1[post_f_1$TLD_1 == ".ar"] <- "ARG"
-post_f_1$TLD_1[post_f_1$TLD_1 == ".pr"] <- "PRI"
-post_f_1$TLD_1[post_f_1$TLD_1 == ".co"] <- "COL"
-post_f_1$TLD_1[post_f_1$TLD_1 == ".cl"] <- "CHL"
-post_f_1$TLD_1[post_f_1$TLD_1 == ".cu"] <- "CUB"
-post_f_1$TLD_1[post_f_1$TLD_1 == ".uy"] <- "URY"
-post_f_1$TLD_1[post_f_1$TLD_1 == ".bo"] <- "BOL"
-post_f_1$TLD_1[post_f_1$TLD_1 == ".cr"] <- "CRI"
-post_f_1$TLD_1[post_f_1$TLD_1 == ".hn"] <- "HND"
-post_f_1$TLD_1[post_f_1$TLD_1 == ".do"] <- "DOM"
-post_f_1$TLD_1[post_f_1$TLD_1 == ".sv"] <- "SLV"
-post_f_1$TLD_1[post_f_1$TLD_1 == ".ni"] <- "NIC"
-post_f_1$TLD_1[post_f_1$TLD_1 == ".br"] <- "BRA"
-post_f_1$TLD_1[post_f_1$TLD_1 == ".ve"] <- "VEN"
-post_f_1$TLD_1[post_f_1$TLD_1 == ".pa"] <- "PAN"
 
-# Associate TLD for other parts of the world
-post_f_1$TLD_1[post_f_1$TLD_1 == ".eu"|
-                   post_f_1$TLD_1 == ".fr"|
-                   post_f_1$TLD_1 == ".it"|
-                   post_f_1$TLD_1 == ".uk"|
-                   post_f_1$TLD_1 == ".be"|
-                   post_f_1$TLD_1 == ".ru"|
-                   post_f_1$TLD_1 == ".es"|
-                   post_f_1$TLD_1 == ".de"|
-                   post_f_1$TLD_1 == ".me"|
-                   post_f_1$TLD_1 == ".au"|
-                   post_f_1$TLD_1 == ".al"|
-                   post_f_1$TLD_1 == ".va"|
-                   post_f_1$TLD_1 == ".at"|
-                   post_f_1$TLD_1 == ".no"|
-                   post_f_1$TLD_1 == ".ch"| 
-                   post_f_1$TLD_1 == ".ie"| 
-                   post_f_1$TLD_1 == ".se"| 
-                   post_f_1$TLD_1 == ".rs"| 
-                   post_f_1$TLD_1 == ".ie"| 
-                   post_f_1$TLD_1 == ".pl"] <- "EU"
-
-post_f_1$TLD_1[post_f_1$TLD_1 == ".us"|post_f_1$TLD_1 == ".vi"|
-                   post_f_1$TLD_1 == ".ca"] <- "N.A"
-
-post_f_1$TLD_1[post_f_1$TLD_1 == ".ph"|
-                   post_f_1$TLD_1 == ".in"|
-                   post_f_1$TLD_1 == ".gd"|
-                   post_f_1$TLD_1 == ".nz"|
-                   post_f_1$TLD_1 == ".st"|
-                   post_f_1$TLD_1 == ".ag"|
-                   post_f_1$TLD_1 == ".io"|
-                   post_f_1$TLD_1 == ".ws"|
-                   post_f_1$TLD_1 == ".cn"|
-                   post_f_1$TLD_1 == ".kr"|
-                   post_f_1$TLD_1 == ".fo"|
-                   post_f_1$TLD_1 == ".am"|
-                   post_f_1$TLD_1 == ".fm"|
-                   post_f_1$TLD_1 == ".ng"|
-                   post_f_1$TLD_1 == ".mp"|
-                   post_f_1$TLD_1 == ".gl"|
-                   post_f_1$TLD_1 == ".la"] <- "MUNDO"
 
 
 ## Identify which countries are mentioned in text content 
-
 # Create bag of words for all latin american countries to identify which countries are mentioned in the discourse
 
 mx <- c("mx", "mexic", "amlo", "guadalaj", "jalisc", 
@@ -326,11 +240,12 @@ inst.int <- c("onu", "cidh", "unesco", "mercosur", "oms",
               "oit", "pfizer", "sinovac", "oea")
 
 
-# Put all text in a single variable
+# Combine text from the 'message_clean' and 'description_clean' columns into a single variable
 
 post_f_1$text <- paste(post_f_1$message_clean, post_f_1$description_clean)
 
-# Define a list of categories and their corresponding variable names
+# Define a list of country codes and their associated variables (e.g., word lists made before)
+
 categories <- list(
   MX = mx, SLV = slv, NIC = nic, CRI = cri, HND = hnd, PAN = pan,
   DOM = dom, PE = pe, EC = ec, CO = co, CHL = chl, VEN = ven,
@@ -338,7 +253,10 @@ categories <- list(
   N_A = N.A, EU = eu, MUNDO = mundo, INST = inst.int
 )
 
-# Identify when BoW method identify a country the message of the post
+# Use the bag-of-words (BoW) method to identify if a country is mentioned in the post text
+# For each category, create a new binary column (e.g., 'MXd', 'SLVd') indicating whether
+# the associated keywords for that category appear in the text
+
 for (cat in names(categories)) {
   var_name <- paste0(cat, "d")  # e.g., MXm, SLVm each variable reflects wether the BoW associated to that country code is identified
   post_f_1[[var_name]] <- as.integer(grepl(paste(categories[[cat]], collapse = "|"), 
@@ -346,25 +264,29 @@ for (cat in names(categories)) {
 }
 
 
-# Identify complete observations: where a country is identified either in the description or the message
+
+# Calculate if any country is identified in the text using the BoW method
+
 
 post_f_1$Ct <- rowSums(post_f_1[68:89]) # Identify if any country was identified in text
-post_f_1$Ctld <- post_f_1$TLD_1  # Identify if any country was identified in TLD
+post_f_1$Ctld <- !is.na(post_f_1$TLD_1)  # Identify if any country was identified in TLD
 
-#Identify when no country was identified by any of the 3 methods used
-post_f_1$Cs <- ifelse(post_f_1$Ctld == 0 &
+# Determine if no country is identified by any method (BoW or TLD)
+# 'Cs' = 0 if no country is identified, 1 otherwise
+
+post_f_1$Cs <- ifelse(post_f_1$Ctld == FALSE &
                 post_f_1$Ct==0, 0,1)
 
+# Assign values to 'Csm' (Country Summary) based on country identification
+# 'N.D' = No data, 'INT' = More than one country mentioned, otherwise specific country codes
 
-#share of the entries with enough information to make a map: 40%, of initial corpus around 70 000 obs
-
-#Create Csm variable to keep track of the country mentioned in the text
+post_f_1$Csm <- post_f_1$TLD_1 # Default variable to country identified in TLD
 post_f_1$Csm[post_f_1$Cs == 0] <- "N.D" #assign no data for relevant columns
 post_f_1$Csm[post_f_1$Ct > 1] <- "INT" #Assign international for observations that mention more than one country
 
-# Assign uniform names for countries found in text columns and store them in a different variable 
+# Assign specific country codes to 'Csm' if only one country is mentioned in the text (this takes precedence over TLD)
 
-post_f_1$Csm[post_f_1$Ct == 1 & post_f_1$MXd == 1 ] <- "MEX" # example: if there's a country found in the description (Cd) and that country is Mexico (MXd) then assign Mexico
+post_f_1$Csm[post_f_1$Ct == 1 & post_f_1$MXd == 1 ] <- "MEX" # example: if there's a country found in the text (Ct) and that country is Mexico (MXd) then assign Mexico
 
 post_f_1$Csm[post_f_1$Ct == 1 & post_f_1$ARGd == 1 ] <- "ARG" #repeat for every country
 
@@ -408,10 +330,11 @@ post_f_1$Csm[post_f_1$Ct == 1 & post_f_1$URYd == 1 ] <- "URY"
 
 post_f_1$Csm[post_f_1$Ct == 1 & post_f_1$VENd == 1 ] <- "VEN"
 
+
 #Create data frame only with the relevant data for geography-based mapping
+posts_map <- post_f_1[,c(13,14,43,44,47,50,51,52,54,55,58,93)]
 
-posts_map <- post_f_1[,c(12,13,43,42,46,49,50,51,53,54,58,93)]
-
+#Export data to csv
 write.csv(posts_map,"posts_map.csv", row.names = FALSE, fileEncoding = "UTF-8")
 
 

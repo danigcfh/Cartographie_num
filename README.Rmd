@@ -1,0 +1,123 @@
+---
+title: "README"
+author: "DaniGCFH"
+date: "2024-12-12"
+output: html_document
+---
+
+This repository contains all the data manipulation I used to cartography online interactions from Facebook data encompassing 116 Facebook groups and pages from the anti-gender mouvement in Latin America.
+
+The original data contained the data and metadata associated to the publications from these 116 facebook groups and pages between 2020 and 2021. It included features such as: description, url, comment count, like count, link, account handle, and other features. 
+
+This analysis supports a larger research project studying online interactions and discourse within anti-gender movements in Latin America.
+
+The data was originally collected through CrowdTangle. This service is no longer available and I cannot share the data due to sensible information protections under the RGPD. For access to the current database, please contact SOMAR, the new interface to access Meta's library of contents.
+
+[SOMAR](https://somar.infoready4.com/#homePage)
+
+There are 3 scripts in this repository
+
+-  Traitement_Donnees: cleans and manages data to extract relevant features such as relevant countries mentionned in texts. 
+
+- map_by_country: creates an edge table compatible with gephi summarizing the relationship between facebook pages and countries (wether they're the country of origin or the country identified within the text)
+
+- map_by_links : creates an edge table compatible with gephi summarizing the relationships between accounts sharing information and original source of the information.
+
+# R script: Traitement_Donnees
+
+## Overview
+
+This script performs data preprocessing and analysis on a dataset of Facebook posts. The goal is to:
+
+- Identify and eliminate duplicate posts.
+
+- Clean and standardize text data.
+
+- Extract metadata such as country of origin and top-level domain (TLD).
+
+- Detect mentions of countries in the post content using a bag-of-words approach.
+
+- Summarize metadata completeness and identify posts with insufficient information.
+
+The processed dataset can be used for further analysis, such as hyperlink analysis and studying country-specific discourse.
+
+---
+
+## Output
+
+1. The processed file `postsF1.csv` will be saved in the working directory for further analysis in map_by_shares.R script.
+
+2. The processed file `posts_mao.csv` will be saved in the working directory for further analysis in map_by_countries.R script.
+
+---
+
+# R script: map_by_countries
+
+## Overview
+This script processes a dataset of Facebook posts to analyze relationships between the country of origin and target countries mentioned or associated with each post. The resulting data can be used for visualizations and network analysis tools like Gephi.
+The goal is to:
+
+- Identify incomplete data and standardize name conventions
+
+- Replace country codes with full country names using a predefined mapping dictionary
+
+- Create two dataframes:
+
+    - **Origin Countries (`df_origin`)**: Groups data by `account_name` and the unique origin country for each account. A default weight of 1 is assigned.
+    
+    - **Target Countries (`df_target`)**: Counts the frequency of each target country mentioned for each account, assigning the frequency as the weight.
+    
+- Combine the dataframes using `rbind`, and rows with missing values are removed.
+
+- Ensure compatibility with Gephi by renaming columns.
+
+- Export data to a CSV file (`map_by_country.csv`) for visualization and analysis.
+
+---
+
+## Output
+
+- **map_by_country.csv**: A CSV file containing interaction data between accounts and countries, formatted for use in network analysis tools.
+
+1. **Source**: The account name or the account origin country.
+2. **Target**: The country identified in the text posted or the account name
+3. **Weight**: Frequency of the interaction.
+
+
+# R script: map_by_links
+## Overview
+
+This script processes a dataset of Facebook posts to analyze relationships between accounts and the pages or groups they share. The data output is tailored for visualization and network analysis, specifically for tools like Gephi.
+The goal is to:
+
+- extract meaningful identifiers from Facebook hyperlinks using a custom function. The function differentiates between shared groups, pages, and general links:
+
+- Harmonizes account identifiers to ensure consistency 
+
+- Exclude observations where the shared link corresponds to the same account as the sharing account  (i.e., self-shares are excluded) and incomplete data
+
+- Generate a data frame (`df`) to map interactions between sharing accounts (`Source`) and the accounts or groups they share (`Target`), with weights are assigned based on the frequency of shares.
+
+- Manage dataset size by retaining only observations with these caracteristics:
+
+  - Targets with more than one interaction.
+  
+  - Links shared more than five times.
+  
+- Save data in a gephi compatible format as `map_by_links.csv`.
+
+---
+
+## Output
+- **map_by_links.csv**: A CSV file containing interaction data between accounts and shared links, formatted for use in network analysis tools.
+
+1. **Source**: The account sharing the link.
+2. **Target**: The shared page, group, or link.
+3. **Weight**: Frequency of the interaction.
+
+
+
+
+
+
+

@@ -6,8 +6,6 @@ library(countrycode)
 #Load data
 posts <- read_csv("posts_map.csv")
 
-#Keep only complete obs
-posts <- filter(posts, Csm != "N.D")
 
 # Rename "csm" to "target country"
 colnames(posts)[colnames(posts) == "Csm"] <- "Target Country"
@@ -44,10 +42,17 @@ posts$`Origin Country` <- ifelse(posts$`Origin Country` %in% names(replacement_m
 
 # Creating the dataframe for Country of Origin
 df_origin <- posts %>%
+  filter(!is.na(`Origin Country`)) %>%
+  distinct(account_name, `Origin Country`) %>%
   group_by(account_name) %>%
-  summarise(Source = unique(`Origin Country`), Weight = 1) %>%
-  select( Source, Target = account_name, Weight)  # Include Weight in the output
-View(df_target)
+  slice(1) %>%   # keep one country per account
+  ungroup() %>%
+  transmute(
+    Source = `Origin Country`,
+    Target = account_name,
+    Weight = 1
+  )
+View(df_origin)
 
 # Creating the dataframe for Target Countries
 df_target <- posts %>%
